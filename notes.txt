@@ -79,3 +79,4 @@ Package JSON:
 Development vs. Production:
     - we create heroku project with heroku-redis instance (hobby dev = free)
     - allow heroku to look for process.env.PORT instead of default and peer
+    - if ENV='development' we provide redis local server url and if 'production' we use heroku redis url
