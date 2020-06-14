@@ -1,0 +1,81 @@
+/api/blocks:
+    - request for blockchain's chain
+
+/api/mine:
+    - post request calls for node to mine block and add to chain
+
+Transaction Input:
+    - timestamp
+    - most recent transaction (effectively the wallet balance)
+    - signature
+    - public key
+
+Jest Fn:
+    - jest.fn objects let you monitor how code runs (errors, logs, etc)
+    - errorMock catches errors?
+
+Transaction Pool:
+    - contains unique set of transactions
+    - updates existing stored transactions
+    - can rewrite multiple transactions
+
+Transaction Mining:
+    - grab all valid transactions in pool
+    - generate reward for miners
+    - have miners do CPU work to find valid nonce
+    - have miners broadcast updated blockchain
+    - have miners clear individual transaction pools upon updating blockchain
+    - each node is/has instance of transactionMiner and draws from their local pool instance
+
+Calculating Wallet Balance:
+    - want to calculate wallet balance based on most recent wallet output transaction
+    - case 1: wallet output transaction is most recent transaction
+    - case 2: more transactions after wallet transaction in same block
+    - case 3: more transactions after wallet transaction in following blocks
+
+Validating Transactions Within Blocks:
+    - transactions are correctly formatted
+    - only one reward per block
+    - input balances are valid according to blockchain history
+    - all block transactions are unique (no duplicates)
+
+QUESTIONS:
+    - when would you not pass in chain as parameter for createTransaction???
+    - so every node automatically run its own versions of backend documents?
+
+Front-End Development:
+    - source code for front-end stored in client/src
+    - all src documents mashed into client/dist files, which is were static files are searched for
+    - parcel (without build) simply picks up additional changes without rebuilding?
+    - state holds dynamic variables you need to update throughout site usage
+    - cycling components (like lists) need unique key identifiers (we uses hashes though since they're unique by nature)
+    - render list: { object.map(thing => return ...) }
+    - App.js loads BlockList, BlockList loads all blocks, blocks created as Block instances
+    - JS get functions allow you to specify what to return when getting a React state variable
+    - setState: calls on render which causes page to be dynamically updated
+    - stateless components: can't use props like you would normally; prop stated but received as parameter
+    - also stateless components are ones that aren't typically standalone pages
+    - use parenthesis instead of braces for arrow functions if you want to just return what's in parenthesis (used in mapping)
+    - onChange calls your helper function which automatically receives event as parameter (generalized to most arrow functions)
+    - document.location.origin gives you original hostname and port number (allows you to make api calls from peer servers)
+
+Style Sheets:
+    - store style sheet links in head and create index.css file for specific styling
+    - also import index.css into index.js to pick up styling specs
+    - Bootstrap CDN
+    - Google Fonts
+    - use flex layout to determine orientation in which components are placed
+
+Package JSON:
+    - "clean" clears out cache storing info on client/dist (called before building dev or prod)
+    - dev = dev environment, build = prod environment
+    - "dev" will run dev-client & blockchain pubsub and index.js (single ampersand allows synchronous running so frontend doesn't block backend)
+    - parcel bundles src files into outputtable dist files
+    - parcel also bundles import data into single documents
+    - Babel allows us to use state; .babelrc file is basically package json file for just babel dependencies
+    - react-router-dom and history used to allow users to navigate multiple pages
+    - have to install homebrew before installing redis to use redis-server!
+
+Development vs. Production:
+    - we create heroku project with heroku-redis instance (hobby dev = free)
+    - allow heroku to look for process.env.PORT instead of default and peer
