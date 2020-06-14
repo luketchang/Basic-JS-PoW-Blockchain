@@ -7,11 +7,18 @@ import history from '../history';
  * ______________________________
  * Summary:
  *  - loads two forms and submission button for creating own transaction
+ *  - also displays all addresses who've conducted transaction in blockchain through api/known-addresses
  *  - updates internal recipient and amount state variables based on user typing
  *  - submit button makes POST request to add transaction to transaction pool
  */
 class ConductTransaction extends Component {
-    state = { recipient: '', amount: 0 };
+    state = { recipient: '', amount: 0, knownAddresses: [] };
+
+    componentDidMount() {
+        fetch(`${document.location.origin}/api/known-addresses`)
+            .then(response => response.json())
+            .then(json => this.setState({ knownAddresses: json }));
+    }
 
     updateRecipient = event => {
         this.setState({ recipient: event.target.value });
@@ -39,6 +46,16 @@ class ConductTransaction extends Component {
             <div className='ConductTransaction'>
                 <Link to='/'>Home</Link>
                 <h3>Conduct Transaction</h3>
+                <br />
+                <h4>Known Addresses</h4>
+                {   
+                    this.state.knownAddresses.map(address => (
+                        <div key={address}>
+                            <div>{address}</div>
+                            <br />
+                        </div>
+                    ))
+                }
                 <FormGroup>
                     <FormControl
                         input='text'

@@ -3,34 +3,31 @@ const bodyParser = require('body-parser');
 const request = require('request');
 const path = require('path');
 const Blockchain = require('./blockchain/Blockchain');
-const PubSub = require('./app/Pubsub');
+const PubSub = require('./app/pubsub');
 const TransactionPool = require('./wallet/transaction-pool');
 const Wallet = require('./wallet/wallet');
 const TransactionMiner = require('./app/transaction-miner');
-
-const inDevelopment = process.env.ENV === 'development';
-
-const DEFAULT_PORT = 3000;
-const ROOT_NODE_ADD = `http://localhost:${DEFAULT_PORT}`;
-const REDIS_URL = inDevelopment ? 'redis://127.0.0.1:6379' : 'redis://h:p8dfacaf70107bd75242cd690c313a38074386e25ab4f758577191ac368999c86@ec2-52-87-17-172.compute-1.amazonaws.com:24789';
 
 const app = express();
 const blockchain = new Blockchain();
 const transactionPool = new TransactionPool();
 const wallet = new Wallet();
-const pubsub = new PubSub({ blockchain, transactionPool, redisUrl: REDIS_URL });
+const pubsub = new PubSub({ blockchain, transactionPool });
 const transactionMiner = new TransactionMiner({ blockchain, transactionPool, wallet, pubsub });
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'client/dist'))); //specifies where to look for static files
 
+const DEFAULT_PORT = 3000;
+const ROOT_NODE_ADD = `http://localhost:${DEFAULT_PORT}`;
+
 /* Route: /api/blocks
  * ___________________
  * Description:
- *  - get request returns blockchain at given server
+ *  - get request returns blockchain for node in reverse
  */
 app.get('/api/blocks', (req, res) => {
-    res.json(blockchain.chain);
+    res.json(blockchain.chain.slice().reverse());
 });
 
 /* Route: /api/mine
@@ -116,6 +113,25 @@ app.get('/api/get-wallet-info', (req, res) => {
     });
 });
 
+/* Route: /api/known-addresses
+ * ___________________________
+ * Description:
+ *  - returns all unique addresses with transactions in the blockchain
+ *  - loops through all blocks and all transactions and adds unique addresses
+ */
+app.get('/api/known-addresses', (req, res) => {
+    const addressMap = {};
+
+    for(let block of blockchain.chain) {
+        for (let transaction of block.data) {
+            const recipient = Object.keys(transaction.outputMap);
+
+            recipient.forEach(recipient => addressMap[recipient] = recipient );
+        }
+    }
+    res.json(Object.keys(addressMap));
+});
+
 /* Route: *
  * _________
  * Description:
@@ -162,38 +178,36 @@ const syncPoolMaps = () => {
 
 // ADDING SEED DATA FOR DEV TESTING
 // ______________________________________________________________
-if(inDevelopment) {
-    const walletFoo = new Wallet();
-    const walletBar = new Wallet();
+const walletFoo = new Wallet();
+const walletBar = new Wallet();
 
-    const generateTransaction = ({ wallet, recipient, amount }) => {
-        const transaction = wallet.createTransaction({ 
-            amount, 
-            recipient, 
-            chain: blockchain.chain 
-        });
+const generateTransaction = ({ wallet, recipient, amount }) => {
+    const transaction = wallet.createTransaction({ 
+        amount, 
+        recipient, 
+        chain: blockchain.chain 
+    });
 
-        transactionPool.setTransaction(transaction);
-    };
+    transactionPool.setTransaction(transaction);
+};
 
-    const walletAction = () => generateTransaction({ wallet: wallet, recipient: walletFoo.publicKey, amount: 5 });
-    const walletFooAction = () => generateTransaction({ wallet: walletFoo, recipient: walletBar.publicKey, amount: 10 });
-    const walletBarAction = () => generateTransaction({ wallet: walletBar, recipient: wallet.publicKey, amount: 15 });
+const walletAction = () => generateTransaction({ wallet: wallet, recipient: walletFoo.publicKey, amount: 5 });
+const walletFooAction = () => generateTransaction({ wallet: walletFoo, recipient: walletBar.publicKey, amount: 10 });
+const walletBarAction = () => generateTransaction({ wallet: walletBar, recipient: wallet.publicKey, amount: 15 });
 
-    for(let i = 0; i < 10; i++) {
-        if(i % 3 === 0) {
-            walletAction();
-            walletFooAction();
-        } else if(i % 3 === 1) {
-            walletFooAction();
-            walletBarAction();
-        } else {
-            walletBarAction();
-            walletAction();
-        }
-
-        transactionMiner.mineTransactions();
+for(let i = 0; i < 10; i++) {
+    if(i % 3 === 0) {
+        walletAction();
+        walletFooAction();
+    } else if(i % 3 === 1) {
+        walletFooAction();
+        walletBarAction();
+    } else {
+        walletBarAction();
+        walletAction();
     }
+
+    transactionMiner.mineTransactions();
 }
 // ______________________________________________________________
 
@@ -205,7 +219,7 @@ if(process.env.GENERATE_PEER_PORT === 'true') {
 }
 
 // listen at appropriate port, sync chain and transaction pool map with root if not root node
-const PORT = process.env.PORT || PEER_PORT || DEFAULT_PORT;
+const PORT = PEER_PORT || DEFAULT_PORT;
 app.listen(PORT, () => {
     console.log(`listening at localhost: ${PORT}`);
     

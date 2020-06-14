@@ -30,7 +30,8 @@ body {
 }
 
 .Transaction, .TransactionPool {
-    padding-bottom: 3%
+    padding-bottom: 3%;
+    margin: 5%;
 }
 
 a, a:hover {
@@ -39,4 +40,8 @@ a, a:hover {
 
 .ConductTransaction {
     margin: 10%;
+}
+
+.showInfo {
+    margin-top: 2%;
 }
