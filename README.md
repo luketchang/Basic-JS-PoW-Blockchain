@@ -1,11 +1,11 @@
 # Blockchain-Cryptocurrency
 
 ## Summary:
-- blockchain cryptocurrency system
-- publisher/subscriber set-up
-- full proof of work system for mining transactions
-- wallet and transaction pool implementations
-- Back-end: TDD with Javascript
+- full proof of work blockchain cryptocurrency system
+- system components: block, blockchain, transaction, transaction pool, wallet, and transaction miner
+- systems code in `app`, `blockchain`, `wallet`, and `util` folders
+- frontend code in `client/src` folder
+- Back-end: test-driven development with Javascript
 - Front-end: React
 
 ### Home
